@@ -2,30 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>F1 Start Reaction Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Pro Reaction Trainer</title>
     <style>
         :root {
             --bg-color: #0e0e0e;
             --text-color: #d1d1d1;
-            --panel-bg: #141414;
+            --panel-bg: rgba(20, 20, 20, 0.95);
             --gantry-bg: #1a1a1a;
             --light-off: #222;
             --light-on: #ff0909;
-            --border-color: #222;
-            --subtext-color: #555;
-            --toggle-bg: #333;
-            --toggle-active: #34c759; /* iOS Green */
+            --border-color: #333;
+            --subtext-color: #777;
+            --toggle-active: #34c759;
+            --f1-red: #e10600;
         }
         :root[data-theme='light'] {
-            --bg-color: #f0f0f0;
+            --bg-color: #f4f4f4;
             --text-color: #1a1a1a;
-            --panel-bg: #ffffff;
+            --panel-bg: rgba(255, 255, 255, 0.95);
             --gantry-bg: #e0e0e0;
             --light-off: #ccc;
-            --light-on: #ff0909;
-            --border-color: #ccc;
-            --subtext-color: #777;
-            --toggle-bg: #d1d1d1;
+            --border-color: #ddd;
+            --subtext-color: #666;
         }
 
         body {
@@ -40,405 +39,466 @@
             margin: 0;
             cursor: pointer;
             user-select: none;
-            transition: background 0.3s, color 0.3s;
             overflow: hidden;
+            transition: background 0.3s;
         }
 
-        /* Top Corner Controls */
+        /* --- UI OVERLAYS --- */
         .corner-controls {
             position: fixed;
             top: 20px;
             width: calc(100% - 40px);
             display: flex;
             justify-content: space-between;
-            align-items: center;
             padding: 0 20px;
             z-index: 100;
         }
 
-        /* iOS Toggle Switch */
-        .theme-control {
+        .ios-switch {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
+            font-size: 10px;
+            font-weight: 800;
             letter-spacing: 1px;
-            color: var(--subtext-color);
+            background: var(--panel-bg);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
         }
-        .theme-switch {
+
+        .switch {
             position: relative;
             display: inline-block;
-            width: 46px;
-            height: 26px;
+            width: 40px;
+            height: 22px;
         }
-        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--toggle-bg);
-            transition: .4s;
-            border-radius: 34px;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #444; transition: .4s; border-radius: 34px;
         }
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
         }
         input:checked + .slider { background-color: var(--toggle-active); }
-        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider:before { transform: translateX(18px); }
 
-        .sound-toggle {
+        .btn-icon {
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
             color: var(--text-color);
-            cursor: pointer;
-            font-size: 18px;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px;
         }
-        .sound-toggle:active { transform: scale(0.9); }
 
-        #container {
-            display: flex;
-            gap: 40px;
-            align-items: flex-start;
-        }
-        #main-panel { display: flex; flex-direction: column; align-items: center; }
-        #gantry {
-            background: var(--gantry-bg);
-            padding: 30px 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
-            border: 1px solid var(--border-color);
+        /* --- THE GANTRY --- */
+        #game-area {
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
         }
-        #lights { display: flex; gap: 20px; }
-        .light-column {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+
+        #gantry {
             background: #111;
-            padding: 10px;
-            border-radius: 30px;
-            border: 1px solid #222;
+            padding: 30px 45px;
+            border-radius: 15px;
+            border-bottom: 8px solid #222;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex; gap: 20px;
+            z-index: 10;
+        }
+
+        .light-column {
+            display: flex; flex-direction: column; gap: 10px;
+            background: #050505; padding: 10px; border-radius: 30px;
         }
         .light {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: var(--light-off);
-            transition: background 0.05s, box-shadow 0.05s;
-            border: 2px solid #0a0a0a;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+            width: 45px; height: 45px; border-radius: 50%;
+            background: #111; transition: background 0.05s;
+            border: 2px solid #000;
         }
         .light.active {
             background: var(--light-on);
-            box-shadow: 0 0 25px var(--light-on), inset 0 0 10px rgba(255,255,255,0.6);
+            box-shadow: 0 0 30px var(--light-on), inset 0 0 10px rgba(255,255,255,0.5);
         }
-        #status-container { margin-top: 30px; text-align: center; height: 70px; }
-        #status { font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-        #rating { font-size: 14px; margin-top: 5px; font-weight: 600; letter-spacing: 1px; height: 20px; }
-        #subtext { margin-top: 10px; font-size: 13px; color: var(--subtext-color); }
 
-        /* History Panel */
-        #history-panel {
-            background: var(--panel-bg);
+        /* --- THE CAR --- */
+        #track-container {
+            width: 100vw; height: 120px;
+            position: fixed; bottom: 50px;
+            border-bottom: 4px solid #333;
+        }
+        #car {
+            position: absolute; bottom: 10px; left: 20%;
+            width: 180px; height: auto;
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 5;
+        }
+
+        /* --- STATS PANEL --- */
+        #side-panel {
+            position: fixed; right: 20px; top: 80px;
+            width: 260px; background: var(--panel-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            width: 230px;
-            max-height: 420px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border-radius: 12px; padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; gap: 12px;
+            backdrop-filter: blur(10px);
         }
-        #history-panel h3 {
-            margin: 0 0 12px 0;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #777;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+
+        .stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
         }
-        .stats-summary {
-            font-size: 13px;
-            color: var(--text-color);
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
+        .stat-card {
+            background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.05);
         }
+        .stat-card small { display: block; font-size: 9px; text-transform: uppercase; color: #666; margin-bottom: 2px; }
+        .stat-card strong { font-size: 14px; font-weight: 800; }
+
+        /* --- ANALYTICS --- */
+        #sparkline-container { height: 40px; width: 100%; margin: 5px 0; }
         #history-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            overflow-y: auto;
-            flex-grow: 1;
+            list-style: none; padding: 0; margin: 0;
+            max-height: 150px; overflow-y: auto; font-size: 12px;
         }
-        #history-list li {
-            padding: 6px 10px;
-            background: var(--gantry-bg);
-            margin-bottom: 6px;
-            border-radius: 6px;
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid var(--border-color);
+        .history-item {
+            display: flex; justify-content: space-between;
+            padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.03);
         }
-        #history-list li.best { border-color: #00ff6655; color: #00ff66; }
-        .delta { font-size: 11px; margin-left: 4px; }
-        .delta.better { color: #00ff66; }
-        .delta.worse { color: #ff3333; }
+        .history-item.pb { color: var(--toggle-active); font-weight: bold; }
 
-        .btn-group { display: flex; gap: 6px; margin-top: 10px; }
-        .action-btn {
-            flex: 1;
-            background: var(--light-off);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 600;
+        #benchmark {
+            font-size: 13px; font-style: italic; color: var(--f1-red);
+            text-align: center; margin-top: 5px; height: 18px; font-weight: bold;
         }
-        .action-btn:hover { opacity: 0.8; }
+
+        /* --- CENTER HUD --- */
+        #hud { margin-top: 40px; text-align: center; min-height: 100px; }
+        #status { font-size: 32px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0; }
+        #rating-text { font-size: 14px; color: var(--subtext-color); margin-top: 5px; }
+
+        /* --- ANIMATIONS --- */
+        .confetti {
+            position: fixed; top: -10px; width: 8px; height: 8px;
+            pointer-events: none; animation: fall 3s linear forwards;
+        }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
     </style>
 </head>
 <body>
+
     <div class="corner-controls">
-        <div class="theme-control">
-            <span>Light Mode</span>
-            <label class="theme-switch">
-                <input type="checkbox" id="theme-checkbox" onchange="toggleTheme(event)">
+        <div class="ios-switch">
+            <span id="theme-label">DARK MODE 🌙</span>
+            <label class="switch">
+                <input type="checkbox" id="theme-toggle">
                 <span class="slider"></span>
             </label>
         </div>
-        <button class="sound-toggle" id="sound-btn" onclick="toggleSound(event)" title="Toggle Sound">🔊</button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-icon" id="fullscreen-btn" title="Fullscreen">⛶</button>
+            <button class="btn-icon" id="sound-btn">🔊</button>
+        </div>
     </div>
 
-    <div id="container">
-        <div id="main-panel">
-            <div id="gantry">
-                <div id="lights">
-                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
-                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
-                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
-                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
-                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
-                </div>
-            </div>
-            <div id="status-container">
-                <div id="status">Click or Space to Start</div>
-                <div id="rating"></div>
-            </div>
-            <div id="subtext">Press Spacebar or Click anywhere</div>
+    <div id="game-area">
+        <div id="gantry">
+            <div class="light-column"><div class="light"></div><div class="light"></div></div>
+            <div class="light-column"><div class="light"></div><div class="light"></div></div>
+            <div class="light-column"><div class="light"></div><div class="light"></div></div>
+            <div class="light-column"><div class="light"></div><div class="light"></div></div>
+            <div class="light-column"><div class="light"></div><div class="light"></div></div>
         </div>
 
-        <div id="history-panel">
-            <h3>Attempts</h3>
-            <div class="stats-summary">
-                <span>Best: <strong id="best-time">--</strong></span>
-                <span>Avg: <strong id="avg-time">--</strong></span>
-            </div>
-            <ul id="history-list">
-                <li style="color: #444; justify-content: center; background: none; border: none;">No attempts yet</li>
-            </ul>
-            <div class="btn-group">
-                <button class="action-btn" onclick="copyStats(event)">Copy</button>
-                <button class="action-btn" onclick="clearHistory(event)">Reset</button>
-            </div>
+        <div id="hud">
+            <h1 id="status">CLICK TO START</h1>
+            <div id="rating-text">READY FOR LIGHTS OUT?</div>
+            <div id="benchmark"></div>
+        </div>
+    </div>
+
+    <div id="track-container">
+        <svg id="car" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10,45 L190,45 L180,25 L50,25 Z" fill="#e10600" />
+            <rect x="30" y="40" width="30" height="15" rx="5" fill="#111" />
+            <rect x="140" y="40" width="30" height="15" rx="5" fill="#111" />
+            <path d="M20,25 L40,5 L50,5 L50,25 Z" fill="#333" />
+            <rect x="80" y="20" width="20" height="10" rx="2" fill="#fff" opacity="0.8" />
+        </svg>
+    </div>
+
+    <div id="side-panel">
+        <div class="stats-grid">
+            <div class="stat-card"><small>Personal Best</small><strong id="pb-val">--</strong></div>
+            <div class="stat-card"><small>Last 5 Avg</small><strong id="avg5-val">--</strong></div>
+            <div class="stat-card"><small>Consistency</small><strong id="cons-val">--</strong></div>
+            <div class="stat-card"><small>Attempts</small><strong id="count-val">0</strong></div>
+        </div>
+        
+        <div id="sparkline-container">
+            <svg id="sparkline" width="100%" height="40" preserveAspectRatio="none"></svg>
+        </div>
+
+        <ul id="history-list"></ul>
+
+        <div style="display: flex; gap: 5px; margin-top: 5px;">
+            <button class="action-btn" id="copy-btn" style="flex: 1; padding: 6px; font-size: 10px; cursor:pointer;">SHARE CARD</button>
+            <button class="action-btn" id="csv-btn" style="flex: 1; padding: 6px; font-size: 10px; cursor:pointer;">EXPORT CSV</button>
+            <button class="action-btn" id="reset-btn" style="padding: 6px; font-size: 10px; cursor:pointer;">🗑️</button>
         </div>
     </div>
 
     <script>
-        let state = 'idle';
+        let state = 'IDLE';
         let startTime;
         let timeout;
-        let history = JSON.parse(localStorage.getItem('f1_history') || '[]');
-        let soundEnabled = JSON.parse(localStorage.getItem('f1_sound') ?? 'true');
-        let theme = localStorage.getItem('f1_theme') || 'dark';
+        let history = JSON.parse(localStorage.getItem('f1_pro_history') || '[]');
+        let soundEnabled = true;
+        let wakeLock = null;
 
-        const columns = document.querySelectorAll('.light-column');
+        const benchmarks = [
+            { ms: 120, name: "🤖 AI Bot (0.120s)" },
+            { ms: 150, name: "Max Verstappen - 2023 Japan GP (0.150s)" },
+            { ms: 175, name: "Lewis Hamilton - 2020 British GP (0.175s)" },
+            { ms: 190, name: "Charles Leclerc - 2022 Monaco GP (0.190s)" },
+            { ms: 210, name: "Lando Norris - 2021 Russian GP (0.210s)" },
+            { ms: 230, name: "Fernando Alonso - 2023 Saudi GP (0.230s)" },
+            { ms: 250, name: "Carlos Sainz - 2022 Singapore GP (0.250s)" },
+            { ms: 270, name: "Sergio Perez - 2022 Monaco GP (0.270s)" },
+            { ms: 290, name: "George Russell - 2021 Hungary GP (0.290s)" },
+            { ms: 320, name: "Oscar Piastri - 2023 Qatar GP (0.320s)" },
+            { ms: 350, name: "Average Human (0.350s)" },
+            { ms: 400, name: "Rookie Driver (0.400s)" },
+            { ms: 500, name: "Safety Car Driver (0.500s)" }
+        ];
+
+        const lights = document.querySelectorAll('.light');
+        const car = document.getElementById('car');
         const status = document.getElementById('status');
-        const rating = document.getElementById('rating');
-        const historyList = document.getElementById('history-list');
-        const bestTimeEl = document.getElementById('best-time');
-        const avgTimeEl = document.getElementById('avg-time');
+        const ratingText = document.getElementById('rating-text');
+        const benchmarkText = document.getElementById('benchmark');
+        const themeToggle = document.getElementById('theme-toggle');
         const soundBtn = document.getElementById('sound-btn');
-        const themeCheckbox = document.getElementById('theme-checkbox');
+        const sparkline = document.getElementById('sparkline');
 
-        // Initialize Settings
-        document.documentElement.setAttribute('data-theme', theme);
-        themeCheckbox.checked = (theme === 'light');
-        updateHistoryUI();
-        updateSoundUI();
+        updateUI();
 
-        let audioCtx = null;
-        function playBeep(freq = 440, duration = 0.08, type = 'sine') {
-            if (!soundEnabled) return;
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
+        async function requestWakeLock() {
+            try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
         }
-
-        function toggleSound(e) {
-            e.stopPropagation();
-            soundEnabled = !soundEnabled;
-            localStorage.setItem('f1_sound', soundEnabled);
-            updateSoundUI();
-            if (soundEnabled) playBeep(600, 0.1);
-        }
-
-        function toggleTheme(e) {
-            e.stopPropagation();
-            theme = themeCheckbox.checked ? 'light' : 'dark';
-            localStorage.setItem('f1_theme', theme);
-            document.documentElement.setAttribute('data-theme', theme);
-        }
-
-        function updateSoundUI() { soundBtn.innerText = soundEnabled ? '🔊' : '🔇'; }
 
         document.body.addEventListener('click', (e) => {
-            if (e.target.closest('.corner-controls') || e.target.closest('#history-panel')) return;
-            handleAction();
+            if (e.target.closest('#side-panel') || e.target.closest('.corner-controls')) return;
+            handleTrigger();
         });
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); handleTrigger(); } });
 
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') { e.preventDefault(); handleAction(); }
-        });
-
-        function handleAction() {
-            if (state === 'idle') startSequence();
-            else if (state === 'ready') react();
-            else if (state === 'lights_up' || state === 'waiting') jumpStart();
+        function handleTrigger() {
+            if (state === 'IDLE') startLights();
+            else if (state === 'READY') react();
+            else if (state === 'LIGHTS_UP' || state === 'WAITING') jumpStart();
         }
 
-        async function startSequence() {
-            state = 'lights_up';
-            status.innerText = 'Ready...';
-            status.style.color = 'var(--text-color)';
-            rating.innerText = '';
-            document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+        async function startLights() {
+            state = 'LIGHTS_UP';
+            requestWakeLock();
+            status.innerText = "PREPARE...";
+            ratingText.innerText = "EYES ON THE GANTRY";
+            benchmarkText.innerText = "";
+            car.style.transform = "translateX(0)";
 
-            for (let i = 0; i < columns.length; i++) {
-                if (state !== 'lights_up') return;
-                columns[i].querySelectorAll('.light').forEach(l => l.classList.add('active'));
-                playBeep(440 + (i * 60), 0.08); 
+            lights.forEach(l => l.classList.remove('active'));
+
+            for (let i = 0; i < 5; i++) {
+                if (state !== 'LIGHTS_UP') return;
+                const pair = [lights[i*2], lights[i*2+1]];
+                pair.forEach(l => l.classList.add('active'));
+                playBeep(400 + (i * 80), 0.1);
+                if (navigator.vibrate) navigator.vibrate(25);
                 await new Promise(r => setTimeout(r, 1000));
             }
 
-            if (state !== 'lights_up') return;
-            state = 'waiting';
+            if (state !== 'LIGHTS_UP') return;
+            state = 'WAITING';
+            const randomDelay = Math.random() * 3000 + 300;
             timeout = setTimeout(() => {
-                if (state === 'waiting') {
-                    document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
-                    state = 'ready';
-                    status.innerText = 'GO!';
-                    status.style.color = '#34c759';
-                    playBeep(880, 0.15, 'triangle'); 
+                if (state === 'WAITING') {
+                    lights.forEach(l => l.classList.remove('active'));
+                    state = 'READY';
                     startTime = performance.now();
+                    status.innerText = "GO GO GO!";
+                    playBeep(800, 0.2, 'triangle');
                 }
-            }, Math.random() * 2800 + 200);
-        }
-
-        function getRating(ms) {
-            if (ms < 180) return { text: '⚡ F1 Legend Reflexes!', color: '#34c759' };
-            if (ms < 220) return { text: '🏎️ Pro Driver Pace', color: '#007aff' };
-            if (ms < 270) return { text: '👍 Solid Reaction', color: '#ffcc00' };
-            if (ms < 350) return { text: '☕ Average Reflexes', color: '#ff9500' };
-            return { text: '🐢 Safety Car Speed', color: '#ff3b30' };
+            }, randomDelay);
         }
 
         function react() {
-            const reactionTime = Math.round(performance.now() - startTime);
-            status.innerText = `${reactionTime} ms`;
-            status.style.color = 'var(--text-color)';
-            const rank = getRating(reactionTime);
-            rating.innerText = rank.text;
-            rating.style.color = rank.color;
-            state = 'idle';
-            history.unshift(reactionTime);
-            if (history.length > 25) history.pop();
-            localStorage.setItem('f1_history', JSON.stringify(history));
-            updateHistoryUI();
+            const time = Math.round(performance.now() - startTime);
+            state = 'IDLE';
+            status.innerText = `${time}ms`;
+            
+            const isPB = history.length === 0 || time < Math.min(...history);
+            if (isPB) {
+                status.innerText += " (NEW PB!)";
+                confetti();
+            }
+
+            const bench = benchmarks.find(b => time <= b.ms) || benchmarks[benchmarks.length-1];
+            benchmarkText.innerText = `Pace: ${bench.name}`;
+            ratingText.innerText = getRating(time);
+
+            const launchX = Math.max(100, 2000 - time);
+            car.style.transform = `translateX(${launchX}px)`;
+
+            saveAttempt(time);
+            updateUI();
         }
 
         function jumpStart() {
             clearTimeout(timeout);
-            status.innerText = 'Jump Start!';
-            status.style.color = '#ff3b30';
-            rating.innerText = 'Too early! Wait for lights out.';
-            rating.style.color = '#ff3b30';
-            playBeep(200, 0.2, 'sawtooth');
-            document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
-            state = 'idle';
+            state = 'IDLE';
+            status.innerText = "JUMP START!";
+            status.style.color = "#ff0909";
+            ratingText.innerText = "10s STOP-GO PENALTY";
+            playBeep(150, 0.4, 'sawtooth');
+            lights.forEach(l => l.classList.remove('active'));
+            setTimeout(() => status.style.color = "", 1500);
         }
 
-        function clearHistory(e) {
-            e.stopPropagation(); history = [];
-            localStorage.removeItem('f1_history'); updateHistoryUI();
+        function saveAttempt(ms) {
+            history.unshift(ms);
+            if (history.length > 50) history.pop();
+            localStorage.setItem('f1_pro_history', JSON.stringify(history));
         }
 
-        function copyStats(e) {
-            e.stopPropagation();
-            if (history.length === 0) return;
-            const best = Math.min(...history);
-            const avg = Math.round(history.reduce((a, b) => a + b, 0) / history.length);
-            const text = `🏎️ F1 Reaction Game Stats\nBest: ${best}ms\nAverage: ${avg}ms\nAttempts: ${history.length}`;
-            navigator.clipboard.writeText(text).then(() => alert('Stats copied!'));
-        }
+        function updateUI() {
+            const count = history.length;
+            document.getElementById('count-val').innerText = count;
+            
+            if (count > 0) {
+                const pb = Math.min(...history);
+                const avg5 = Math.round(history.slice(0, 5).reduce((a,b)=>a+b,0) / Math.min(count, 5));
+                
+                const avgAll = history.reduce((a,b)=>a+b,0) / count;
+                const squareDiffs = history.map(v => Math.pow(v - avgAll, 2));
+                const stdDev = Math.sqrt(squareDiffs.reduce((a,b)=>a+b,0) / count);
 
-        function updateHistoryUI() {
-            if (history.length === 0) {
-                historyList.innerHTML = '<li style="color: #444; justify-content: center; background: none; border: none;">No attempts yet</li>';
-                bestTimeEl.innerText = '--'; avgTimeEl.innerText = '--'; return;
+                document.getElementById('pb-val').innerText = `${pb}ms`;
+                document.getElementById('avg5-val').innerText = `${avg5}ms`;
+                document.getElementById('cons-val').innerText = `±${Math.round(stdDev)}ms`;
+
+                drawSparkline();
+                renderHistory();
             }
-            const best = Math.min(...history);
-            const avg = Math.round(history.reduce((a, b) => a + b, 0) / history.length);
-            bestTimeEl.innerText = `${best}ms`; avgTimeEl.innerText = `${avg}ms`;
-            historyList.innerHTML = '';
-            history.forEach((time, index) => {
-                const li = document.createElement('li');
-                if (time === best) li.classList.add('best');
-                let deltaHtml = '';
-                if (index < history.length - 1) {
-                    const diff = time - history[index + 1];
-                    deltaHtml = `<span class="delta ${diff < 0 ? 'better' : 'worse'}">(${diff < 0 ? '' : '+'}${diff}ms)</span>`;
-                }
-                li.innerHTML = `<span>#${history.length - index}</span> <strong>${time} ms</strong> ${deltaHtml}`;
-                historyList.appendChild(li);
-            });
         }
+
+        function drawSparkline() {
+            if (history.length < 2) return;
+            const points = history.slice(0, 20).reverse();
+            const max = Math.max(...points);
+            const min = Math.min(...points);
+            const range = max - min || 1;
+            
+            let d = `M 0 ${40 - ((points[0]-min)/range)*30}`;
+            const step = 100 / (points.length - 1);
+            
+            points.forEach((p, i) => {
+                const x = i * step;
+                const y = 35 - ((p - min) / range) * 30;
+                d += ` L ${x} ${y}`;
+            });
+
+            sparkline.innerHTML = `<path d="${d}%" fill="none" stroke="var(--f1-red)" stroke-width="2" />`;
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const pb = Math.min(...history);
+            list.innerHTML = history.slice(0, 10).map((t, i) => `
+                <li class="history-item ${t === pb ? 'pb' : ''}">
+                    <span>#${history.length - i}</span>
+                    <strong>${t}ms</strong>
+                </li>
+            `).join('');
+        }
+
+        function getRating(ms) {
+            if (ms < 190) return "⚡ ABSOLUTE LEGEND! GOD-LIKE REFLEXES.";
+            if (ms < 230) return "🏎️ WORLD CLASS PRO PACE.";
+            if (ms < 280) return "🔥 SOLID POINT FINISH.";
+            if (ms < 350) return "👍 MIDFIELD RUNNER.";
+            return "🐢 BACK OF THE GRID.";
+        }
+
+        function playBeep(f, d, t='sine') {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new AudioContext();
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = t; o.frequency.value = f;
+                g.gain.setValueAtTime(0.05, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d);
+                o.connect(g); g.connect(ctx.destination);
+                o.start(); o.stop(ctx.currentTime + d);
+            } catch(e) {}
+        }
+
+        function confetti() {
+            for(let i=0; i<40; i++) {
+                const div = document.createElement('div');
+                div.className = 'confetti';
+                div.style.left = Math.random()*100+'vw';
+                div.style.background = ['#e10600', '#fff', '#ffd700'][i%3];
+                div.style.width = Math.random()*10+5+'px';
+                div.style.height = div.style.width;
+                div.style.animationDuration = Math.random()*2+1+'s';
+                document.body.appendChild(div);
+                setTimeout(()=>div.remove(), 3000);
+            }
+        }
+
+        document.getElementById('sound-btn').onclick = (e) => {
+            soundEnabled = !soundEnabled;
+            e.target.innerText = soundEnabled ? '🔊' : '🔇';
+        };
+
+        document.getElementById('theme-toggle').onchange = (e) => {
+            const t = e.target.checked ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.getElementById('theme-label').innerText = t === 'light' ? 'LIGHT MODE ☀️' : 'DARK MODE 🌙';
+        };
+
+        document.getElementById('fullscreen-btn').onclick = () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        };
+
+        document.getElementById('csv-btn').onclick = () => {
+            const csv = "Attempt,Time(ms)\n" + history.map((t,i)=>`${history.length-i},${t}`).join("\n");
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'f1_reaction_data.csv');
+            a.click();
+        };
+
+        document.getElementById('copy-btn').onclick = () => {
+            const pb = document.getElementById('pb-val').innerText;
+            const text = `🏎️ F1 PRO REACTION CARD\nPB: ${pb}\nAttempts: ${history.length}\nTry it: ${window.location.href}`;
+            navigator.clipboard.writeText(text).then(()=>alert("Card Copied!"));
+        };
+
+        document.getElementById('reset-btn').onclick = () => {
+            if(confirm("Clear all data?")) { history = []; localStorage.removeItem('f1_pro_history'); updateUI(); }
+        };
+
     </script>
 </body>
 </html>
