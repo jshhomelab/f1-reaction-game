@@ -13,6 +13,8 @@
             --light-on: #ff0909;
             --border-color: #222;
             --subtext-color: #555;
+            --toggle-bg: #333;
+            --toggle-active: #007aff; /* iPhone Blue */
         }
         :root[data-theme='light'] {
             --bg-color: #f0f0f0;
@@ -23,6 +25,7 @@
             --light-on: #ff0909;
             --border-color: #ccc;
             --subtext-color: #777;
+            --toggle-bg: #d1d1d1;
         }
 
         body {
@@ -109,6 +112,7 @@
             font-size: 13px;
             color: var(--subtext-color);
         }
+
         /* History Panel */
         #history-panel {
             background: var(--panel-bg);
@@ -136,13 +140,62 @@
             letter-spacing: 1px;
             color: #777;
         }
-        .toggle-btn {
+
+        /* iPhone Toggle Switch */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 42px;
+            height: 22px;
+        }
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--toggle-bg);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider {
+            background-color: var(--toggle-active);
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .sound-toggle {
             background: none;
             border: none;
             color: var(--text-color);
             cursor: pointer;
             font-size: 16px;
-            padding: 0 5px;
+            padding: 0;
+            line-height: 1;
         }
 
         .stats-summary {
@@ -199,7 +252,7 @@
             transition: background 0.2s;
         }
         .action-btn:hover {
-            background: #333;
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -225,9 +278,12 @@
         <div id="history-panel">
             <div class="panel-header">
                 <h3>Attempts</h3>
-                <div>
-                    <button class="toggle-btn" id="theme-btn" onclick="toggleTheme(event)" title="Toggle Theme">🌙</button>
-                    <button class="toggle-btn" id="sound-btn" onclick="toggleSound(event)" title="Toggle Sound">🔊</button>
+                <div class="header-controls">
+                    <label class="theme-switch" title="Toggle Dark/Light Mode">
+                        <input type="checkbox" id="theme-checkbox" onchange="toggleTheme(event)">
+                        <span class="slider"></span>
+                    </label>
+                    <button class="sound-toggle" id="sound-btn" onclick="toggleSound(event)" title="Toggle Sound">🔊</button>
                 </div>
             </div>
             <div class="stats-summary">
@@ -259,13 +315,14 @@
         const bestTimeEl = document.getElementById('best-time');
         const avgTimeEl = document.getElementById('avg-time');
         const soundBtn = document.getElementById('sound-btn');
-        const themeBtn = document.getElementById('theme-btn');
+        const themeCheckbox = document.getElementById('theme-checkbox');
 
-        // Apply theme on load
+        // Initialize Theme
         document.documentElement.setAttribute('data-theme', theme);
+        themeCheckbox.checked = (theme === 'light');
+
         updateHistoryUI();
         updateSoundUI();
-        updateThemeUI();
 
         // Web Audio API Beeps
         let audioCtx = null;
@@ -301,14 +358,12 @@
 
         function toggleTheme(e) {
             e.stopPropagation();
-            theme = theme === 'dark' ? 'light' : 'dark';
+            theme = themeCheckbox.checked ? 'light' : 'dark';
             localStorage.setItem('f1_theme', theme);
             document.documentElement.setAttribute('data-theme', theme);
-            updateThemeUI();
         }
 
         function updateSoundUI() { soundBtn.innerText = soundEnabled ? '🔊' : '🔇'; }
-        function updateThemeUI() { themeBtn.innerText = theme === 'dark' ? '🌙' : '☀️'; }
 
         // Controls
         document.body.addEventListener('click', handleAction);
@@ -320,7 +375,7 @@
         });
 
         function handleAction(e) {
-            if (e && e.target.closest('button')) return;
+            if (e && e.target.closest('.header-controls') || e && e.target.closest('.btn-group')) return;
 
             if (state === 'idle') startSequence();
             else if (state === 'ready') react();
