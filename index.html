@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>F1 Start Reaction Game</title>
+    <style>
+        body {
+            background: #0e0e0e;
+            color: #d1d1d1;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+        #container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+        #main-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #gantry {
+            background: #1a1a1a;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #lights {
+            display: flex;
+            gap: 20px;
+        }
+        .light-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #111;
+            padding: 10px;
+            border-radius: 30px;
+            border: 1px solid #222;
+        }
+        .light {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #222;
+            transition: background 0.05s, box-shadow 0.05s;
+            border: 2px solid #0a0a0a;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+        }
+        .light.active {
+            background: #ff0909;
+            box-shadow: 0 0 25px #ff0909, inset 0 0 10px rgba(255,255,255,0.6);
+        }
+        #status-container {
+            margin-top: 30px;
+            text-align: center;
+            height: 70px;
+        }
+        #status {
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+        }
+        #rating {
+            font-size: 14px;
+            color: #00ff66;
+            margin-top: 5px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            height: 20px;
+        }
+        #subtext {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #555;
+        }
+        /* History Panel */
+        #history-panel {
+            background: #141414;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 20px;
+            width: 230px;
+            max-height: 420px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #222;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        #history-panel h3 {
+            margin: 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #777;
+        }
+        .sound-toggle {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+        }
+        .sound-toggle:hover { color: #fff; }
+
+        .stats-summary {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        #history-list li {
+            padding: 6px 10px;
+            background: #1a1a1a;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #252525;
+        }
+        #history-list li.best {
+            border-color: #00ff6655;
+            color: #00ff66;
+        }
+        .delta {
+            font-size: 11px;
+            margin-left: 4px;
+        }
+        .delta.better { color: #00ff66; }
+        .delta.worse { color: #ff3333; }
+
+        .btn-group {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .action-btn {
+            flex: 1;
+            background: #222;
+            border: 1px solid #333;
+            color: #888;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            text-transform: uppercase;
+            transition: background 0.2s;
+        }
+        .action-btn:hover {
+            background: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="main-panel">
+            <div id="gantry">
+                <div id="lights">
+                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
+                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
+                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
+                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
+                    <div class="light-column"><div class="light"></div><div class="light"></div></div>
+                </div>
+            </div>
+            <div id="status-container">
+                <div id="status">Click or Space to Start</div>
+                <div id="rating"></div>
+            </div>
+            <div id="subtext">Press Spacebar or Click anywhere</div>
+        </div>
+
+        <div id="history-panel">
+            <div class="panel-header">
+                <h3>Attempts</h3>
+                <button class="sound-toggle" id="sound-btn" onclick="toggleSound(event)" title="Toggle Sound">🔊</button>
+            </div>
+            <div class="stats-summary">
+                <span>Best: <strong id="best-time">--</strong></span>
+                <span>Avg: <strong id="avg-time">--</strong></span>
+            </div>
+            <ul id="history-list">
+                <li style="color: #444; justify-content: center; background: none; border: none;">No attempts yet</li>
+            </ul>
+            <div class="btn-group">
+                <button class="action-btn" onclick="copyStats(event)">Copy</button>
+                <button class="action-btn" onclick="clearHistory(event)">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = 'idle';
+        let startTime;
+        let timeout;
+        let history = JSON.parse(localStorage.getItem('f1_history') || '[]');
+        let soundEnabled = JSON.parse(localStorage.getItem('f1_sound') ?? 'true');
+
+        const columns = document.querySelectorAll('.light-column');
+        const status = document.getElementById('status');
+        const rating = document.getElementById('rating');
+        const historyList = document.getElementById('history-list');
+        const bestTimeEl = document.getElementById('best-time');
+        const avgTimeEl = document.getElementById('avg-time');
+        const soundBtn = document.getElementById('sound-btn');
+
+        updateHistoryUI();
+        updateSoundUI();
+
+        // Web Audio API Beeps
+        let audioCtx = null;
+        function playBeep(freq = 440, duration = 0.08, type = 'sine') {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.warn('Audio error:', e);
+            }
+        }
+
+        function toggleSound(e) {
+            e.stopPropagation();
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('f1_sound', soundEnabled);
+            updateSoundUI();
+            if (soundEnabled) playBeep(600, 0.1);
+        }
+
+        function updateSoundUI() {
+            soundBtn.innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // Controls
+        document.body.addEventListener('click', handleAction);
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleAction();
+            }
+        });
+
+        function handleAction(e) {
+            if (e && e.target.closest('button')) return;
+
+            if (state === 'idle') startSequence();
+            else if (state === 'ready') react();
+            else if (state === 'lights_up' || state === 'waiting') jumpStart();
+        }
+
+        async function startSequence() {
+            state = 'lights_up';
+            status.innerText = 'Ready...';
+            status.style.color = '#888';
+            rating.innerText = '';
+            
+            document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+
+            for (let i = 0; i < columns.length; i++) {
+                if (state !== 'lights_up') return;
+                const lightsInCol = columns[i].querySelectorAll('.light');
+                lightsInCol.forEach(l => l.classList.add('active'));
+                playBeep(440 + (i * 60), 0.08); // Rising pitch per red light
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+            if (state !== 'lights_up') return;
+            state = 'waiting';
+
+            const randomDelay = Math.random() * 2800 + 200;
+            timeout = setTimeout(() => {
+                if (state === 'waiting') {
+                    document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+                    state = 'ready';
+                    status.innerText = 'GO!';
+                    status.style.color = '#00ff66';
+                    playBeep(880, 0.15, 'triangle'); // Higher pitch GO tone
+                    startTime = performance.now();
+                }
+            }, randomDelay);
+        }
+
+        function getRating(ms) {
+            if (ms < 180) return { text: '⚡ F1 Legend Reflexes!', color: '#00ff66' };
+            if (ms < 220) return { text: '🏎️ Pro Driver Pace', color: '#00ccff' };
+            if (ms < 270) return { text: '👍 Solid Reaction', color: '#ffcc00' };
+            if (ms < 350) return { text: '☕ Average Reflexes', color: '#ff9900' };
+            return { text: '🐢 Safety Car Speed', color: '#ff3333' };
+        }
+
+        function react() {
+            const reactionTime = Math.round(performance.now() - startTime);
+            status.innerText = `${reactionTime} ms`;
+            status.style.color = '#fff';
+            
+            const rank = getRating(reactionTime);
+            rating.innerText = rank.text;
+            rating.style.color = rank.color;
+
+            state = 'idle';
+
+            history.unshift(reactionTime);
+            if (history.length > 25) history.pop();
+            localStorage.setItem('f1_history', JSON.stringify(history));
+            updateHistoryUI();
+        }
+
+        function jumpStart() {
+            clearTimeout(timeout);
+            status.innerText = 'Jump Start!';
+            status.style.color = '#ff3333';
+            rating.innerText = 'Too early! Wait for lights out.';
+            rating.style.color = '#ff3333';
+            playBeep(200, 0.2, 'sawtooth');
+            document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+            state = 'idle';
+        }
+
+        function clearHistory(e) {
+            e.stopPropagation();
+            history = [];
+            localStorage.removeItem('f1_history');
+            updateHistoryUI();
+        }
+
+        function copyStats(e) {
+            e.stopPropagation();
+            if (history.length === 0) {
+                alert('No attempts to copy!');
+                return;
+            }
+            const best = Math.min(...history);
+            const avg = Math.round(history.reduce((a, b) => a + b, 0) / history.length);
+            const text = `🏎️ F1 Reaction Game Stats\nBest: ${best}ms\nAverage: ${avg}ms\nAttempts: ${history.length}`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Stats copied to clipboard!');
+            });
+        }
+
+        function updateHistoryUI() {
+            if (history.length === 0) {
+                historyList.innerHTML = '<li style="color: #444; justify-content: center; background: none; border: none;">No attempts yet</li>';
+                bestTimeEl.innerText = '--';
+                avgTimeEl.innerText = '--';
+                return;
+            }
+
+            const best = Math.min(...history);
+            const avg = Math.round(history.reduce((a, b) => a + b, 0) / history.length);
+
+            bestTimeEl.innerText = `${best}ms`;
+            avgTimeEl.innerText = `${avg}ms`;
+
+            historyList.innerHTML = '';
+            history.forEach((time, index) => {
+                const li = document.createElement('li');
+                if (time === best) li.classList.add('best');
+                
+                let deltaHtml = '';
+                // history[index+1] is actually the *older* attempt in chronological sequence comparison
+                if (index < history.length - 1) {
+                    const diff = time - history[index + 1];
+                    if (diff < 0) deltaHtml = `<span class="delta better">(${diff}ms)</span>`;
+                    else if (diff > 0) deltaHtml = `<span class="delta worse">(+${diff}ms)</span>`;
+                }
+
+                li.innerHTML = `<span>#${history.length - index}</span> <strong>${time} ms</strong> ${deltaHtml}`;
+                historyList.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
