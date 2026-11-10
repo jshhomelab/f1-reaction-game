@@ -101,6 +101,70 @@
         .confetti { position: fixed; top: -10px; width: 10px; height: 10px; animation: confetti-fall 3s ease-out forwards; pointer-events: none; }
         @keyframes pulse-green { 0%, 100% { color: var(--green); } 50% { color: #00cc55; text-shadow: 0 0 20px var(--green); } }
         .pb-flash { animation: pulse-green 1s infinite; }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            .logo { font-size: 48px; }
+            .tagline { font-size: 10px; letter-spacing: 4px; }
+            .menu-buttons { width: 90%; max-width: 300px; }
+            .btn-main, .btn-sec { padding: 16px; font-size: 16px; }
+            
+            /* Stack stats vertically on mobile */
+            .stats-preview { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 15px; }
+            .stat-item { min-width: 80px; }
+            
+            /* Make gantry scrollable horizontally if needed */
+            .gantry { 
+                padding: 30px 30px; 
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 15px;
+            }
+            .light-col { flex-shrink: 0; }
+            .light { width: 35px; height: 35px; }
+            
+            /* Smaller time display on mobile */
+            .time-display { font-size: 48px; }
+            
+            /* Move side panel below game on mobile */
+            .side-panel {
+                position: relative;
+                right: auto;
+                top: auto;
+                transform: none;
+                width: 90%;
+                max-width: 400px;
+                margin-top: 40px;
+                order: 10;
+            }
+            
+            /* Adjust track positioning */
+            .track { bottom: 140px; }
+            .car { width: 120px; }
+            
+            /* Make touch targets bigger */
+            .icon-btn, .back-btn { padding: 12px 16px; }
+        }
+        
+        @media (max-width: 380px) {
+            .gantry { gap: 8px; padding: 20px 15px; }
+            .light { width: 28px; height: 28px; }
+            .time-display { font-size: 36px; }
+            .mini-stat strong { font-size: 14px; }
+        }
+        
+        /* Prevent zoom on input focus */
+        @media screen and (max-width: 768px) {
+            input, select, textarea { font-size: 16px; }
+        }
+        
+        /* Landscape phone adjustments */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .gantry { margin-bottom: 20px; }
+            .hud { margin-top: 10px; }
+            .track { bottom: 20px; height: 60px; }
+            .side-panel { display: none; } /* Hide stats panel in landscape */
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -466,8 +530,14 @@
             closeModal('settings-modal');
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function openModal(id) { 
+            document.getElementById(id).classList.add('active'); 
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(id) { 
+            document.getElementById(id).classList.remove('active'); 
+            document.body.style.overflow = '';
+        }
 
         // Close modals on outside click
         document.querySelectorAll('.modal').forEach(modal => {
