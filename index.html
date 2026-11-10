@@ -4,9 +4,30 @@
     <meta charset="UTF-8">
     <title>F1 Start Reaction Game</title>
     <style>
+        :root {
+            --bg-color: #0e0e0e;
+            --text-color: #d1d1d1;
+            --panel-bg: #141414;
+            --gantry-bg: #1a1a1a;
+            --light-off: #222;
+            --light-on: #ff0909;
+            --border-color: #222;
+            --subtext-color: #555;
+        }
+        :root[data-theme='light'] {
+            --bg-color: #f0f0f0;
+            --text-color: #1a1a1a;
+            --panel-bg: #ffffff;
+            --gantry-bg: #e0e0e0;
+            --light-off: #ccc;
+            --light-on: #ff0909;
+            --border-color: #ccc;
+            --subtext-color: #777;
+        }
+
         body {
-            background: #0e0e0e;
-            color: #d1d1d1;
+            background: var(--bg-color);
+            color: var(--text-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
@@ -16,6 +37,7 @@
             margin: 0;
             cursor: pointer;
             user-select: none;
+            transition: background 0.3s, color 0.3s;
         }
         #container {
             display: flex;
@@ -28,11 +50,11 @@
             align-items: center;
         }
         #gantry {
-            background: #1a1a1a;
+            background: var(--gantry-bg);
             padding: 30px 40px;
             border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
-            border: 1px solid #2a2a2a;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -54,14 +76,14 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: #222;
+            background: var(--light-off);
             transition: background 0.05s, box-shadow 0.05s;
             border: 2px solid #0a0a0a;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
         }
         .light.active {
-            background: #ff0909;
-            box-shadow: 0 0 25px #ff0909, inset 0 0 10px rgba(255,255,255,0.6);
+            background: var(--light-on);
+            box-shadow: 0 0 25px var(--light-on), inset 0 0 10px rgba(255,255,255,0.6);
         }
         #status-container {
             margin-top: 30px;
@@ -73,11 +95,10 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 2px;
-            color: #888;
+            color: var(--text-color);
         }
         #rating {
             font-size: 14px;
-            color: #00ff66;
             margin-top: 5px;
             font-weight: 600;
             letter-spacing: 1px;
@@ -86,25 +107,25 @@
         #subtext {
             margin-top: 10px;
             font-size: 13px;
-            color: #555;
+            color: var(--subtext-color);
         }
         /* History Panel */
         #history-panel {
-            background: #141414;
-            border: 1px solid #222;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 20px;
             width: 230px;
             max-height: 420px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
         .panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #222;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
             margin-bottom: 10px;
         }
@@ -115,19 +136,18 @@
             letter-spacing: 1px;
             color: #777;
         }
-        .sound-toggle {
+        .toggle-btn {
             background: none;
             border: none;
-            color: #888;
+            color: var(--text-color);
             cursor: pointer;
             font-size: 16px;
-            padding: 0;
+            padding: 0 5px;
         }
-        .sound-toggle:hover { color: #fff; }
 
         .stats-summary {
             font-size: 13px;
-            color: #aaa;
+            color: var(--text-color);
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
@@ -141,14 +161,14 @@
         }
         #history-list li {
             padding: 6px 10px;
-            background: #1a1a1a;
+            background: var(--gantry-bg);
             margin-bottom: 6px;
             border-radius: 6px;
             font-size: 13px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid #252525;
+            border: 1px solid var(--border-color);
         }
         #history-list li.best {
             border-color: #00ff6655;
@@ -168,9 +188,9 @@
         }
         .action-btn {
             flex: 1;
-            background: #222;
-            border: 1px solid #333;
-            color: #888;
+            background: var(--light-off);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
             padding: 6px;
             border-radius: 6px;
             cursor: pointer;
@@ -180,7 +200,6 @@
         }
         .action-btn:hover {
             background: #333;
-            color: #fff;
         }
     </style>
 </head>
@@ -206,7 +225,10 @@
         <div id="history-panel">
             <div class="panel-header">
                 <h3>Attempts</h3>
-                <button class="sound-toggle" id="sound-btn" onclick="toggleSound(event)" title="Toggle Sound">🔊</button>
+                <div>
+                    <button class="toggle-btn" id="theme-btn" onclick="toggleTheme(event)" title="Toggle Theme">🌙</button>
+                    <button class="toggle-btn" id="sound-btn" onclick="toggleSound(event)" title="Toggle Sound">🔊</button>
+                </div>
             </div>
             <div class="stats-summary">
                 <span>Best: <strong id="best-time">--</strong></span>
@@ -228,6 +250,7 @@
         let timeout;
         let history = JSON.parse(localStorage.getItem('f1_history') || '[]');
         let soundEnabled = JSON.parse(localStorage.getItem('f1_sound') ?? 'true');
+        let theme = localStorage.getItem('f1_theme') || 'dark';
 
         const columns = document.querySelectorAll('.light-column');
         const status = document.getElementById('status');
@@ -236,9 +259,13 @@
         const bestTimeEl = document.getElementById('best-time');
         const avgTimeEl = document.getElementById('avg-time');
         const soundBtn = document.getElementById('sound-btn');
+        const themeBtn = document.getElementById('theme-btn');
 
+        // Apply theme on load
+        document.documentElement.setAttribute('data-theme', theme);
         updateHistoryUI();
         updateSoundUI();
+        updateThemeUI();
 
         // Web Audio API Beeps
         let audioCtx = null;
@@ -272,9 +299,16 @@
             if (soundEnabled) playBeep(600, 0.1);
         }
 
-        function updateSoundUI() {
-            soundBtn.innerText = soundEnabled ? '🔊' : '🔇';
+        function toggleTheme(e) {
+            e.stopPropagation();
+            theme = theme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('f1_theme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            updateThemeUI();
         }
+
+        function updateSoundUI() { soundBtn.innerText = soundEnabled ? '🔊' : '🔇'; }
+        function updateThemeUI() { themeBtn.innerText = theme === 'dark' ? '🌙' : '☀️'; }
 
         // Controls
         document.body.addEventListener('click', handleAction);
@@ -296,7 +330,7 @@
         async function startSequence() {
             state = 'lights_up';
             status.innerText = 'Ready...';
-            status.style.color = '#888';
+            status.style.color = 'var(--text-color)';
             rating.innerText = '';
             
             document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
@@ -305,7 +339,7 @@
                 if (state !== 'lights_up') return;
                 const lightsInCol = columns[i].querySelectorAll('.light');
                 lightsInCol.forEach(l => l.classList.add('active'));
-                playBeep(440 + (i * 60), 0.08); // Rising pitch per red light
+                playBeep(440 + (i * 60), 0.08); 
                 await new Promise(r => setTimeout(r, 1000));
             }
 
@@ -319,7 +353,7 @@
                     state = 'ready';
                     status.innerText = 'GO!';
                     status.style.color = '#00ff66';
-                    playBeep(880, 0.15, 'triangle'); // Higher pitch GO tone
+                    playBeep(880, 0.15, 'triangle'); 
                     startTime = performance.now();
                 }
             }, randomDelay);
@@ -336,7 +370,7 @@
         function react() {
             const reactionTime = Math.round(performance.now() - startTime);
             status.innerText = `${reactionTime} ms`;
-            status.style.color = '#fff';
+            status.style.color = 'var(--text-color)';
             
             const rank = getRating(reactionTime);
             rating.innerText = rank.text;
@@ -402,7 +436,6 @@
                 if (time === best) li.classList.add('best');
                 
                 let deltaHtml = '';
-                // history[index+1] is actually the *older* attempt in chronological sequence comparison
                 if (index < history.length - 1) {
                     const diff = time - history[index + 1];
                     if (diff < 0) deltaHtml = `<span class="delta better">(${diff}ms)</span>`;
